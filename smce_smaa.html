@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMCE — Evaluación Multicriterio Social</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e0f11;
+    --bg2:       #16181c;
+    --bg3:       #1e2026;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.12);
+    --text:      #e8e6e0;
+    --muted:     #7a7870;
+    --accent:    #c8f04a;
+    --accent2:   #6af0c0;
+    --danger:    #f06060;
+    --amber:     #f0c060;
+    --purple:    #a090f0;
+    --mono:      'DM Mono', monospace;
+    --sans:      'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .brand { font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  header h1 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; letter-spacing: -0.02em; }
+  header h1 span { color: var(--accent); }
+  .tag { font-size: 11px; font-family: var(--mono); background: var(--bg3); border: 1px solid var(--border2); border-radius: 4px; padding: 4px 10px; color: var(--accent2); }
+
+  /* layout */
+  main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+  /* intro */
+  .intro { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem; }
+  .intro-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+  .intro-card h3 { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .intro-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .intro-card p strong { color: var(--text); font-weight: 500; }
+
+  /* section */
+  .section-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 2rem 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after { content:''; flex:1; height:1px; background: var(--border); }
+
+  /* controls grid */
+  .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .ctrl-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; }
+  .ctrl-row { margin-bottom: 1rem; }
+  .ctrl-row:last-child { margin-bottom: 0; }
+  .ctrl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .ctrl-name { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .ctrl-val { font-size: 13px; font-weight: 500; font-family: var(--mono); color: var(--accent); }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* weight sum warning */
+  .weight-info { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: 1.5rem; }
+  .weight-info span { color: var(--accent); }
+
+  /* action row */
+  .action-row { display: flex; gap: 10px; margin-bottom: 2rem; align-items: center; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .btn:hover { background: var(--bg3); border-color: var(--border2); }
+  .btn-primary { background: var(--accent); color: #0e0f11; border-color: var(--accent); font-weight: 500; }
+  .btn-primary:hover { background: #d4f560; border-color: #d4f560; }
+  .sim-status { font-size: 11px; font-family: var(--mono); color: var(--accent2); }
+
+  /* table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* rank badge */
+  .rank { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px; font-family: var(--mono); font-size: 12px; font-weight: 500; }
+  .r1 { background: rgba(200,240,74,0.15); color: var(--accent); border: 1px solid rgba(200,240,74,0.3); }
+  .r2 { background: rgba(106,240,192,0.1); color: var(--accent2); border: 1px solid rgba(106,240,192,0.2); }
+  .r3 { background: rgba(160,144,240,0.1); color: var(--purple); border: 1px solid rgba(160,144,240,0.2); }
+  .r4 { background: rgba(240,192,96,0.1); color: var(--amber); border: 1px solid rgba(240,192,96,0.2); }
+  .r5 { background: rgba(240,96,96,0.1); color: var(--danger); border: 1px solid rgba(240,96,96,0.2); }
+  .r6 { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+
+  /* bar */
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; min-width: 60px; }
+  .bar-fill { height: 4px; border-radius: 2px; transition: width 0.5s ease; }
+  .bar-num { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 30px; }
+
+  /* zone pill */
+  .pill { display: inline-block; font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 4px; }
+  .pill-rural { background: rgba(240,192,96,0.12); color: var(--amber); border: 1px solid rgba(240,192,96,0.2); }
+  .pill-urban { background: rgba(106,240,192,0.08); color: var(--accent2); border: 1px solid rgba(106,240,192,0.15); }
+
+  /* local name */
+  .local-name { font-weight: 500; font-size: 13px; }
+  .local-id { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  /* SMAA heatmap cells */
+  .heat-cell { text-align: center; font-family: var(--mono); font-size: 11px; border-radius: 4px; transition: background 0.3s; }
+
+  /* metrics */
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-top: 1.5rem; }
+  .metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; }
+  .metric-label { font-size: 10px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .metric-val { font-size: 22px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+  .metric-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* note */
+  .smaa-note { margin-top: 1rem; font-size: 12px; color: var(--muted); font-family: var(--mono); line-height: 1.7; padding: 1rem 1.25rem; background: var(--bg2); border-left: 2px solid var(--accent2); border-radius: 0 8px 8px 0; }
+
+  /* footer */
+  footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; justify-content: space-between; align-items: center; }
+  footer p { font-size: 11px; font-family: var(--mono); color: var(--muted); }
+  footer span { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    header { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
+    main { padding: 1.5rem 1rem 3rem; }
+    .intro { grid-template-columns: 1fr; }
+    .controls-grid { grid-template-columns: 1fr; }
+    .metrics-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand">MINEDU · DIGEIE · DIPLAN</div>
+    <h1>Evaluación Multicriterio <span>Social</span></h1>
+  </div>
+  <div class="tag">SMCE / SMAA — Priorización de locales educativos</div>
+</header>
+
+<main>
+
+  <div class="intro">
+    <div class="intro-card">
+      <h3>¿Qué es el SMAA?</h3>
+      <p>El <strong>Stochastic Multi-Attribute Acceptability Analysis</strong> explora todo el espacio posible de vectores de pesos y calcula con qué <strong>probabilidad</strong> cada local ocupa cada posición del ranking. El resultado es un ranking robusto, independiente de la elección arbitraria de pesos.</p>
+    </div>
+    <div class="intro-card">
+      <h3>¿Por qué no solo suma ponderada?</h3>
+      <p>Con agregación lineal, un local con demolición crítica puede <strong>compensar</strong> ese déficit con alta matrícula. El SMCE evita esa compensación inaceptable en política pública, y el SMAA muestra qué rankings son <strong>robustos</strong> sin importar cómo se ponderen los criterios.</p>
+    </div>
+  </div>
+
+  <div class="section-label">Pesos de los criterios</div>
+
+  <div class="controls-grid">
+    <div class="ctrl-card">
+      <div class="ctrl-row">
+        <div class="ctrl-header">
+          <span class="ctrl-name">ratio de demolición</span>
+          <span class="ctrl-val" id="w1v">35%</span>
+        </div>
+        <input type="range" min="0" max="100" value="35" step="1" id="w1" oninput="recalc()">
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-header">
+          <span class="ctrl-name">matrícula</span>
+          <span class="ctrl-val" id="w2v">25%</span>
+        </div>
+        <input type="range" min="0" max="100" value="25" step="1" id="w2" oninput="recalc()">
+      </div>
+    </div>
+    <div class="ctrl-card">
+      <div class="ctrl-row">
+        <div class="ctrl-header">
+          <span class="ctrl-name">índice de pobreza</span>
+          <span class="ctrl-val" id="w3v">25%</span>
+        </div>
+        <input type="range" min="0" max="100" value="25" step="1" id="w3" oninput="recalc()">
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-header">
+          <span class="ctrl-name">zona (rural / urbano)</span>
+          <span class="ctrl-val" id="w4v">15%</span>
+        </div>
+        <input type="range" min="0" max="100" value="15" step="1" id="w4" oninput="recalc()">
+      </div>
+    </div>
+  </div>
+
+  <div class="weight-info">pesos normalizados → suma: <span id="wsum">100%</span></div>
+
+  <div class="action-row">
+    <button class="btn btn-primary" onclick="runSMAA()">Simular SMAA (5 000 iter.)</button>
+    <button class="btn" onclick="resetWeights()">Restablecer pesos</button>
+    <span class="sim-status" id="sim-status"></span>
+  </div>
+
+  <div class="section-label">Ranking con pesos actuales</div>
+  <div class="table-wrap">
+    <table id="ranking-table"></table>
+  </div>
+
+  <div class="section-label" style="margin-top:2.5rem">Índices de aceptabilidad SMAA</div>
+  <p style="font-size:12px; color:var(--muted); font-family:var(--mono); margin-bottom:1rem;">Probabilidad de ocupar cada posición bajo 5 000 vectores de pesos aleatorios. Mayor intensidad = mayor robustez.</p>
+  <div class="table-wrap">
+    <table id="smaa-table"><tr><td style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:1rem 0">Presiona "Simular SMAA" para ver los índices de aceptabilidad.</td></tr></table>
+  </div>
+
+  <div class="metrics-grid" id="metrics-grid"></div>
+
+  <div class="smaa-note" id="smaa-note">
+    El SMAA explora todo el espacio de pesos posibles usando simulación Monte Carlo. Cada celda muestra la probabilidad (%) de que ese local ocupe esa posición. Un local robusto aparece frecuentemente en la misma posición sin importar cómo se ponderen los criterios.
+  </div>
+
+</main>
+
+<footer>
+  <p>Metodología: <span>SMCE</span> (Munda, 2008) · <span>SMAA</span> (Greco et al., 2019)</p>
+  <p>Datos simulados — ejemplo metodológico</p>
+</footer>
+
+<script>
+const locales = [
+  { id:'LE-001', nombre:'IE San Martín',    demolicion:0.82, matricula:320, pobreza:0.71, rural:1 },
+  { id:'LE-002', nombre:'IE Los Andes',     demolicion:0.45, matricula:180, pobreza:0.55, rural:1 },
+  { id:'LE-003', nombre:'IE Santa Rosa',    demolicion:0.30, matricula:510, pobreza:0.28, rural:0 },
+  { id:'LE-004', nombre:'IE Huayna Cápac',  demolicion:0.68, matricula:95,  pobreza:0.82, rural:1 },
+  { id:'LE-005', nombre:'IE San Francisco', demolicion:0.15, matricula:740, pobreza:0.12, rural:0 },
+  { id:'LE-006', nombre:'IE Villa Alta',    demolicion:0.55, matricula:210, pobreza:0.63, rural:1 },
+];
+
+const normalize = arr => {
+  const mn = Math.min(...arr), mx = Math.max(...arr);
+  return arr.map(v => mx===mn ? 0.5 : (v-mn)/(mx-mn));
+};
+const normD = normalize(locales.map(l=>l.demolicion));
+const normM = normalize(locales.map(l=>l.matricula));
+const normP = normalize(locales.map(l=>l.pobreza));
+const normR = normalize(locales.map(l=>l.rural));
+
+let smaaResults = null;
+
+function getWeights() {
+  let w = [+document.getElementById('w1').value, +document.getElementById('w2').value,
+           +document.getElementById('w3').value, +document.getElementById('w4').value];
+  const s = w.reduce((a,b)=>a+b,0);
+  return s===0 ? [0.25,0.25,0.25,0.25] : w.map(x=>x/s);
+}
+
+function score(i,w) {
+  return w[0]*normD[i] + w[1]*normM[i] + w[2]*normP[i] + w[3]*normR[i];
+}
+
+function getRanking(w) {
+  const scores = locales.map((_,i)=>score(i,w));
+  return scores.map((_,i)=>i).sort((a,b)=>scores[b]-scores[a]);
+}
+
+const rankClasses = ['r1','r2','r3','r4','r5','r6'];
+const barColors   = ['#c8f04a','#6af0c0','#a090f0','#f0c060','#f06060','#5a5a6a'];
+
+function recalc() {
+  const w = getWeights();
+  document.getElementById('w1v').textContent = Math.round(w[0]*100)+'%';
+  document.getElementById('w2v').textContent = Math.round(w[1]*100)+'%';
+  document.getElementById('w3v').textContent = Math.round(w[2]*100)+'%';
+  document.getElementById('w4v').textContent = Math.round(w[3]*100)+'%';
+  document.getElementById('wsum').textContent = '100%';
+
+  const ranking = getRanking(w);
+  const scores  = locales.map((_,i)=>score(i,w));
+  const maxS    = Math.max(...scores);
+
+  let html = `<thead><tr>
+    <th>#</th><th>Local educativo</th>
+    <th>Demolición</th><th>Matrícula</th><th>Pobreza</th><th>Zona</th>
+    <th>Puntaje ponderado</th>
+  </tr></thead><tbody>`;
+
+  ranking.forEach((idx,pos) => {
+    const l = locales[idx];
+    const s = scores[idx];
+    const pct = Math.round(s/maxS*100);
+    html += `<tr>
+      <td><span class="rank ${rankClasses[pos]}">${pos+1}</span></td>
+      <td>
+        <div class="local-name">${l.nombre}</div>
+        <div class="local-id">${l.id}</div>
+      </td>
+      <td style="font-family:var(--mono);font-size:12px">${Math.round(l.demolicion*100)}%</td>
+      <td style="font-family:var(--mono);font-size:12px">${l.matricula}</td>
+      <td style="font-family:var(--mono);font-size:12px">${Math.round(l.pobreza*100)}%</td>
+      <td><span class="pill ${l.rural?'pill-rural':'pill-urban'}">${l.rural?'rural':'urbano'}</span></td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${barColors[pos]}"></div></div>
+          <span class="bar-num">${s.toFixed(2)}</span>
+        </div>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('ranking-table').innerHTML = html;
+  if (smaaResults) renderSMAA();
+}
+
+function runSMAA() {
+  const N = 5000, n = locales.length;
+  const accept = Array.from({length:n},()=>Array(n).fill(0));
+  for (let it=0; it<N; it++) {
+    let rw = Array.from({length:4},()=>Math.random());
+    const s = rw.reduce((a,b)=>a+b,0);
+    rw = rw.map(x=>x/s);
+    getRanking(rw).forEach((idx,pos)=>{ accept[idx][pos]++; });
+  }
+  smaaResults = accept.map(row=>row.map(v=>v/N));
+  document.getElementById('sim-status').textContent = '✓ 5 000 simulaciones completadas';
+  renderSMAA();
+}
+
+function renderSMAA() {
+  if (!smaaResults) return;
+  const n = locales.length;
+  const w = getWeights();
+  const ranking = getRanking(w);
+
+  let html = `<thead><tr><th>Local educativo</th>`;
+  for (let p=0;p<n;p++) html+=`<th>Pos. ${p+1}</th>`;
+  html+=`<th>Pos. central</th></tr></thead><tbody>`;
+
+  locales.forEach((l,i)=>{
+    const row = smaaResults[i];
+    const modal = row.indexOf(Math.max(...row));
+    html += `<tr><td><div class="local-name">${l.nombre}</div><div class="local-id">${l.id}</div></td>`;
+    row.forEach((p,pos)=>{
+      const pct = Math.round(p*100);
+      let bg='transparent', color='var(--muted)';
+      if (pct>40){ bg='rgba(200,240,74,0.2)'; color='var(--accent)'; }
+      else if (pct>25){ bg='rgba(200,240,74,0.12)'; color='#a0c030'; }
+      else if (pct>12){ bg='rgba(200,240,74,0.06)'; color='var(--muted)'; }
+      html += `<td class="heat-cell" style="background:${bg};color:${color}">${pct>0?pct+'%':'—'}</td>`;
+    });
+    html+=`<td class="heat-cell"><span class="rank ${rankClasses[modal]}">${modal+1}</span></td></tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById('smaa-table').innerHTML = html;
+
+  const robustCount = smaaResults.filter(row=>Math.max(...row)>0.5).length;
+  const avgEntropy = smaaResults.map(row=>{
+    return -row.filter(p=>p>0).reduce((a,p)=>a+p*Math.log(p),0);
+  }).reduce((a,b)=>a+b,0)/n;
+
+  document.getElementById('metrics-grid').innerHTML = `
+    <div class="metric-card"><div class="metric-label">Locales con posición robusta</div><div class="metric-val">${robustCount}<span style="font-size:14px;color:var(--muted)"> / ${n}</span></div><div class="metric-sub">prob. &gt; 50% en una posición</div></div>
+    <div class="metric-card"><div class="metric-label">Entropía promedio</div><div class="metric-val">${avgEntropy.toFixed(2)}</div><div class="metric-sub">incertidumbre en el ranking</div></div>
+    <div class="metric-card"><div class="metric-label">Simulaciones</div><div class="metric-val">5 000</div><div class="metric-sub">vectores de pesos aleatorios</div></div>
+    <div class="metric-card"><div class="metric-label">Criterios evaluados</div><div class="metric-val">4</div><div class="metric-sub">demolición · matrícula · pobreza · zona</div></div>
+  `;
+
+  document.getElementById('smaa-note').textContent = 'Resultado SMAA: cada celda muestra la probabilidad (%) de que ese local ocupe esa posición bajo 5 000 vectores de pesos aleatorios. Celdas verdes intensas indican robustez — ese local aparece en esa posición con alta frecuencia independientemente de cómo se ponderen los criterios. La posición central es la moda del ranking simulado.';
+}
+
+function resetWeights() {
+  document.getElementById('w1').value=35;
+  document.getElementById('w2').value=25;
+  document.getElementById('w3').value=25;
+  document.getElementById('w4').value=15;
+  recalc();
+}
+
+recalc();
+</script>
+</body>
+</html>
