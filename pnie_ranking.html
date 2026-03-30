@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orden de prioridad PNIE</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f9f9f9;color:#111;font-size:14px}
+.app{max-width:960px;margin:0 auto;padding:1.5rem 1rem}
+.topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.25rem;border-bottom:1px solid #e5e5e5;padding-bottom:.875rem}
+.topbar h1{font-size:16px;font-weight:500}
+.topbar small{font-size:11px;color:#888}
+.layout{display:grid;grid-template-columns:210px 1fr;gap:1rem}
+@media(max-width:640px){.layout{grid-template-columns:1fr}}
+.side{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:.875rem}
+.ptitle{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.625rem}
+.srow{margin-bottom:.625rem}
+.slabel{display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:3px}
+.slabel b{font-weight:600;color:#111}
+input[type=range]{width:100%;accent-color:#111;height:4px}
+.sep{border:none;border-top:1px solid #f0f0f0;margin:.625rem 0}
+.pbtn{display:block;width:100%;text-align:left;font-size:11px;padding:5px 8px;margin-bottom:4px;border:1px solid #e5e5e5;border-radius:8px;background:transparent;color:#666;cursor:pointer}
+.pbtn:hover{background:#f5f5f5}
+.pbtn.on{border-color:#111;color:#111;font-weight:600}
+.mcbtn{width:100%;margin-top:.625rem;padding:7px;font-size:12px;font-weight:600;border:1px solid #ddd;border-radius:8px;background:transparent;color:#111;cursor:pointer}
+.mcbtn:hover{background:#f5f5f5}
+.mcbtn.busy{color:#aaa}
+.mcmeta{font-size:11px;color:#888;margin-top:.5rem;min-height:14px}
+.stats{display:flex;gap:6px;margin-top:.5rem}
+.stat{flex:1;background:#f5f5f5;border-radius:8px;padding:5px 6px;text-align:center;font-size:10px;color:#888}
+.stat strong{display:block;font-size:13px;font-weight:600;color:#111;margin-top:1px}
+.main{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:.875rem}
+.thead{display:flex;align-items:center;justify-content:space-between;margin-bottom:.625rem}
+.tsubt{font-size:11px;color:#888}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+th{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.04em;padding:5px 7px;border-bottom:1px solid #f0f0f0;text-align:left}
+td{padding:7px 7px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.hi td{background:#fafafa}
+.rn{font-weight:600;font-size:13px;text-align:center;color:#111}
+.nm{font-weight:500;font-size:12px;color:#111}
+.sb{font-size:11px;color:#888;margin-top:1px}
+.bw{width:70px;height:4px;background:#ebebeb;border-radius:2px;overflow:hidden;margin-top:3px}
+.bf{height:100%;border-radius:2px;background:#111;transition:width .35s}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:9px;font-weight:600}
+.ch{font-size:11px;font-weight:600}
+.up{color:#1a9e6e}.dn{color:#d04a2a}.eq{color:#aaa}
+.pbar{display:flex;align-items:center;gap:4px;font-size:12px;color:#111}
+.pd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fnote{font-size:11px;color:#888;margin-top:.75rem;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="topbar">
+  <h1>Orden de prioridad PNIE</h1>
+  <small id="simlabel">Pesos manuales</small>
+</div>
+<div class="layout">
+
+<div class="side">
+  <div class="ptitle">Pesos de criterios</div>
+  <div class="srow">
+    <div class="slabel"><span>Riesgo</span><b id="v1">50%</b></div>
+    <input type="range" id="s1" min="0" max="100" value="50" step="1" oninput="slide()">
+  </div>
+  <div class="srow">
+    <div class="slabel"><span>Equidad</span><b id="v2">30%</b></div>
+    <input type="range" id="s2" min="0" max="100" value="30" step="1" oninput="slide()">
+  </div>
+  <div class="srow">
+    <div class="slabel"><span>Eficiencia</span><b id="v3">20%</b></div>
+    <input type="range" id="s3" min="0" max="100" value="20" step="1" oninput="slide()">
+  </div>
+
+  <div class="sep"></div>
+  <div class="ptitle">Presets</div>
+  <button class="pbtn on" onclick="preset(50,30,20,this)">Riesgo dominante</button>
+  <button class="pbtn" onclick="preset(33,33,34,this)">Pesos iguales</button>
+  <button class="pbtn" onclick="preset(20,60,20,this)">Equidad prioritaria</button>
+  <button class="pbtn" onclick="preset(20,30,50,this)">Eficiencia prioritaria</button>
+
+  <div class="sep"></div>
+  <div class="ptitle">Simulación Monte Carlo</div>
+  <button class="mcbtn" id="mcbtn" onclick="runMC()">Simular 1,000 escenarios</button>
+  <div class="mcmeta" id="mcmeta"></div>
+  <div class="stats" id="mcstats" style="display:none">
+    <div class="stat">Escenarios<strong id="mcn">—</strong></div>
+    <div class="stat">Local #1 robusto<strong id="mcrob">—</strong></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="thead">
+    <div class="ptitle" style="margin:0">Ranking de locales educativos</div>
+    <div class="tsubt">φ = flujo neto PROMETHEE II</div>
+  </div>
+  <table>
+    <colgroup>
+      <col style="width:30px"><col style="width:175px"><col style="width:95px">
+      <col style="width:80px"><col style="width:48px"><col style="width:42px">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>#</th><th>Local educativo</th><th>Flujo neto φ</th>
+        <th>P(pos ≤ 3)</th><th>Grupo</th><th>Δ</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="fnote">
+    P(pos ≤ 3): probabilidad de quedar entre los 3 primeros al explorar 1,000 vectores de pesos aleatorios (Dirichlet uniforme). Δ: cambio de posición respecto al ranking PNIE actual. Los datos de los locales son ilustrativos.
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+const LL=[
+  {n:'IE Tupac Amaru',s:'Ayacucho · adobe · 847 alum.',r:.92,e:.30,f:.28,p:1,g:'G1'},
+  {n:'IE San Martín',s:'Huánuco · VRAEM · 312 alum.',r:.75,e:.95,f:.44,p:2,g:'G1'},
+  {n:'IE 2040 Frontera',s:'Loreto · frontera · 198 alum.',r:.58,e:.90,f:.38,p:3,g:'G2'},
+  {n:'IE Los Andes',s:'Puno · pobreza >50% · 520 alum.',r:.62,e:.80,f:.56,p:5,g:'G3'},
+  {n:'IE Nº 522',s:'Piura · rural · 280 alum.',r:.55,e:.70,f:.48,p:4,g:'G2'},
+  {n:'IE Villa El Salvador',s:'Lima · urbano · 1,240 alum.',r:.48,e:.20,f:.82,p:7,g:'G4'},
+  {n:'IE Señor de los Milagros',s:'Lima · eficiente · 890 alum.',r:.44,e:.25,f:.72,p:6,g:'G3'},
+  {n:'IE San Pablo',s:'Miraflores · urbano · 430 alum.',r:.18,e:.10,f:.30,p:8,g:'G5'},
+];
+const GBG={G1:'#FFEDED',G2:'#FFF4E0',G3:'#E6F7EE',G4:'#E8F2FF',G5:'#F2F2F0'};
+const GCL={G1:'#9a2424',G2:'#5a3200',G3:'#0a4a2a',G4:'#0a3a6a',G5:'#3a3a3a'};
+let probs=LL.map(()=>null);
+
+function W(){
+  let a=+document.getElementById('s1').value,b=+document.getElementById('s2').value,c=+document.getElementById('s3').value;
+  const s=a+b+c||1;return[a/s,b/s,c/s];
+}
+function phi(l,w){return w[0]*l.r+w[1]*l.e+w[2]*l.f;}
+function flows(w){
+  const sc=LL.map(l=>phi(l,w)),n=LL.length;
+  return sc.map((_,i)=>{
+    let p=0,q=0;
+    for(let j=0;j<n;j++){if(i===j)continue;const d=sc[i]-sc[j];p+=Math.max(0,d);q+=Math.max(0,-d);}
+    return(p-q)/(n-1);
+  });
+}
+function render(){
+  const w=W();
+  document.getElementById('v1').textContent=Math.round(w[0]*100)+'%';
+  document.getElementById('v2').textContent=Math.round(w[1]*100)+'%';
+  document.getElementById('v3').textContent=Math.round(w[2]*100)+'%';
+  const fl=flows(w),ord=[...LL.keys()].sort((a,b)=>fl[b]-fl[a]);
+  const mx=Math.max(...fl.map(Math.abs))||1;
+  const tb=document.getElementById('tbody');
+  tb.innerHTML='';
+  ord.forEach((idx,rank)=>{
+    const l=LL[idx],f=fl[idx],d=l.p-(rank+1);
+    let ds='—',dc='eq';
+    if(d>0){ds='↑'+d;dc='up';}else if(d<0){ds='↓'+Math.abs(d);dc='dn';}
+    const bw=Math.round(Math.abs(f)/mx*100);
+    const pb=probs[idx]!==null?
+      `<div class="pbar"><div class="pd" style="background:${probs[idx]>=.6?'#1a9e6e':probs[idx]>=.3?'#c07800':'#ccc'}"></div>${Math.round(probs[idx]*100)}%</div>`:
+      '<span style="color:#bbb">—</span>';
+    const tr=document.createElement('tr');
+    if(rank<3)tr.classList.add('hi');
+    tr.innerHTML=`<td><div class="rn">${rank+1}</div></td>
+<td><div class="nm">${l.n}</div><div class="sb">${l.s}</div></td>
+<td><div style="font-size:12px;font-weight:600">${f>=0?'+':''}${f.toFixed(3)}</div><div class="bw"><div class="bf" style="width:${bw}%"></div></div></td>
+<td>${pb}</td>
+<td><span class="badge" style="background:${GBG[l.g]};color:${GCL[l.g]}">${l.g}</span></td>
+<td><span class="ch ${dc}">${ds}</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+function slide(){
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('simlabel').textContent='Pesos manuales';
+  render();
+}
+function preset(r,e,f,btn){
+  document.getElementById('s1').value=r;
+  document.getElementById('s2').value=e;
+  document.getElementById('s3').value=f;
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('simlabel').textContent=btn.textContent;
+  render();
+}
+function rdir(){
+  const a=[-Math.log(Math.random()),-Math.log(Math.random()),-Math.log(Math.random())];
+  const s=a[0]+a[1]+a[2];return a.map(x=>x/s);
+}
+function runMC(){
+  const btn=document.getElementById('mcbtn');
+  btn.classList.add('busy');btn.textContent='Simulando...';
+  document.getElementById('mcmeta').textContent='';
+  setTimeout(()=>{
+    const N=1000,top3=LL.map(()=>0);
+    for(let i=0;i<N;i++){
+      const w=rdir(),fl=flows(w);
+      [...LL.keys()].sort((a,b)=>fl[b]-fl[a]).forEach((idx,rank)=>{if(rank<3)top3[idx]++;});
+    }
+    probs=top3.map(c=>c/N);
+    const w=W(),fl=flows(w),topIdx=[...LL.keys()].sort((a,b)=>fl[b]-fl[a])[0];
+    btn.classList.remove('busy');btn.textContent='Simular 1,000 escenarios';
+    document.getElementById('mcmeta').textContent=N.toLocaleString()+' vectores de pesos explorados.';
+    document.getElementById('mcstats').style.display='flex';
+    document.getElementById('mcn').textContent=N.toLocaleString();
+    document.getElementById('mcrob').textContent=Math.round(probs[topIdx]*100)+'%';
+    document.getElementById('simlabel').textContent='Monte Carlo (1,000 sim.)';
+    render();
+  },80);
+}
+render();
+</script>
+</body>
+</html>
